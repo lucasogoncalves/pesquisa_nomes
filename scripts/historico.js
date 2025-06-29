@@ -13,7 +13,8 @@ function carregarHistorico() {
   header.insertCell().innerText = "⭐";
   header.insertCell().innerText = "Excluir";
 
-  historico.forEach(nome => {
+  [...historico].reverse().forEach(nome => {
+
     const row = tabela.insertRow();
     row.insertCell().innerText = nome;
 
