@@ -5,6 +5,9 @@ function verificar() {
     return;
   }
 
+  // Salva nome original para uso futuro (INPI)
+  localStorage.setItem("nome_para_verificar", nome);
+
   // Gera slug (sem acentos, espaços e símbolos)
   const slugify = str => str
     .toLowerCase()
@@ -22,27 +25,34 @@ function verificar() {
     localStorage.setItem("historico", JSON.stringify(historico));
   }
 
+  // Copia para a área de transferência
+  navigator.clipboard.writeText(nome)
+    .then(() => console.log("Nome copiado:", nome))
+    .catch(err => console.error("Erro ao copiar:", err));
+
   // Abre a aba auxiliar (janela nomeada para não duplicar)
   window.open("utilities.html", "utils", "width=400,height=400");
 
   // Abas das plataformas com nomeSlug
   const urls = [
-    `https://busca.inpi.gov.br/pePI`,
+    
     `https://www.hostinger.com.br/domain-name-results?domain=${nomeSlug}.com&from=domain-name-search`,
     `https://www.google.com/maps/search/${encodeURIComponent(nome)}`,
     `https://www.instagram.com/${nomeSlug}`,
     `https://www.tiktok.com/@${nomeSlug}`,
     `https://www.facebook.com/${nomeSlug}`,
-    `https://www.youtube.com/@${nomeSlug}`
+    `https://www.youtube.com/@${nomeSlug}`,
+    `https://busca.inpi.gov.br/pePI`
   ];
 
   // Abre todas as URLs em nova aba
-  urls.forEach(url => {
-    window.open(url, "_blank", "noopener,noreferrer");
+  urls.forEach((url, i) => {
+    const janelaNome = `aba${i}`;
+    setTimeout(() => {
+      window.open(url, janelaNome, "noopener,noreferrer");
+    }, i * 100);
   });
 
-  // Salva nome original para uso futuro (INPI)
-  localStorage.setItem("nome_para_verificar", nome);
 
   // Recarrega a principal
   reloadPaginaPrincipal();
