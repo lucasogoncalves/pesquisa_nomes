@@ -1,0 +1,27 @@
+.title {
+  font-size: 40px;
+  color: #0174f0;
+  text-align: center;
+}
+
+.spacing {
+  margin: 0px 0;
+}
+
+.sectiontitle {
+  font-size: 40px;
+  color: #ac01f0;
+  text-align: center;
+  margin: 10px ;
+  padding: 10%;
+}
+
+.section1 {
+  flex: auto;  
+  background-color: #ac01f0;
+  color: #ffffff;
+  text-align: center;
+  width: 100vw;
+  padding: 15%;
+  
+}

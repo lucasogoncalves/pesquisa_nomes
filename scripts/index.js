@@ -35,7 +35,7 @@ function verificar() {
 
   // Abas das plataformas com nomeSlug
   const urls = [
-    
+    `https://www.google.com/search?q=${encodeURIComponent(nome)}`,
     `https://www.hostinger.com.br/domain-name-results?domain=${nomeSlug}.com&from=domain-name-search`,
     `https://www.google.com/maps/search/${encodeURIComponent(nome)}`,
     `https://www.instagram.com/${nomeSlug}`,

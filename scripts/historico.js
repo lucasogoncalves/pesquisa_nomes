@@ -59,13 +59,14 @@ function carregarHistorico() {
     const favCell = row.insertCell();
     const star = document.createElement("span");
     star.classList.add("star");
-    star.innerText = favoritos[nome] ? "★" : "☆";
+    star.innerText = favoritos[nome] ? "⭐" : "☆";
     star.style.cursor = "pointer";
     star.style.fontSize = "20px";
+    
     star.onclick = () => {
       favoritos[nome] = !favoritos[nome];
       localStorage.setItem("favoritos", JSON.stringify(favoritos));
-      star.innerText = favoritos[nome] ? "★" : "☆";
+      star.innerText = favoritos[nome] ? "⭐" : "☆";
     };
     favCell.appendChild(star);
 
@@ -74,7 +75,7 @@ function carregarHistorico() {
     // Excluir
     const cellExcluir = row.insertCell();
     const botaoExcluir = document.createElement("button");
-    botaoExcluir.innerText = "Excluir";
+    botaoExcluir.innerText = "✖";
     botaoExcluir.onclick = () => {
       const novoHistorico = historico.filter(n => n !== nome);
       localStorage.setItem("historico", JSON.stringify(novoHistorico));
