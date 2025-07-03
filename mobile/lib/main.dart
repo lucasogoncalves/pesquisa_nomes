@@ -2,7 +2,7 @@
 import 'package:flutter/material.dart';
 import 'screens/home_screen.dart';
 import 'screens/resultado_screen.dart';
-import 'screens/editar_card_screen.dart';
+
 
 void main() {
   runApp(VerificadorApp());
@@ -67,7 +67,7 @@ class VerificadorApp extends StatelessWidget {
           },
         ),
 
-        '/editar': (_) => const EditarCardScreen(),
+
       },
     );
   }

@@ -3,8 +3,8 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../widgets/nome_card.dart';
-import 'resultado_screen.dart'; // ajuste o caminho se necessário
-
+import '../widgets/aviso_inpi.dart';
+import 'resultado_screen.dart';
 
 class NomeVerificado {
   final String nome;
@@ -49,11 +49,17 @@ class _HomeScreenState extends State<HomeScreen> {
   final TextEditingController _controller = TextEditingController();
   final List<NomeVerificado> _historico = [];
 
-  @override
-  void initState() {
-    super.initState();
-    _carregarHistorico();
-  }
+@override
+void initState() {
+  super.initState();
+  _carregarHistorico();
+
+  WidgetsBinding.instance.addPostFrameCallback((_) {
+    mostrarAvisoINPI(context, this);
+  });
+}
+
+
 
   Future<void> _salvarHistorico() async {
     final prefs = await SharedPreferences.getInstance();
@@ -87,9 +93,10 @@ class _HomeScreenState extends State<HomeScreen> {
 
     await _salvarHistorico();
 
-    // Navegar para a tela de resultados
-// Navegar para a tela de resultados
-if (!mounted) return;
+    if (!mounted) return;
+    mostrarAvisoINPI(context, this);
+
+
     Navigator.push(
       context,
       MaterialPageRoute(
@@ -105,9 +112,7 @@ if (!mounted) return;
         ),
       ),
     );
-
   }
-
 
   void _removerNome(NomeVerificado nome) async {
     setState(() {
@@ -138,6 +143,41 @@ if (!mounted) return;
     await prefs.remove('historico');
   }
 
+  void _mostrarAjuda() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('ℹ️ Como usar o Verificador de Nomes'),
+        content: const SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('• Digite um nome no campo e clique em "Verificar".'),
+              SizedBox(height: 8),
+              Text('• O sistema irá checar se o nome está disponível em:'),
+              SizedBox(height: 4),
+              Text('  - INPI (registro de marca)\n  - Domínio .com\n  - Instagram\n  - TikTok\n  - Facebook\n  - YouTube\n  - Google Maps', style: TextStyle(fontSize: 13)),
+              SizedBox(height: 12),
+              Text('• Você pode marcar o checkbox caso o nome esteja disponível.'),
+              SizedBox(height: 8),
+              Text('• Favoritos são marcados com ⭐ e salvos no histórico.'),
+              SizedBox(height: 8),
+              Text('• Limpe o histórico ao final, se quiser.'),
+              SizedBox(height: 8),
+              Text('⚠️ Dica: o INPI pode demorar alguns segundos para responder.'),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Fechar'),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -147,10 +187,21 @@ if (!mounted) return;
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Seção 1 - Cabeçalho
               Center(
                 child: Column(
                   children: [
+                    const SizedBox(height: 40),
+                    ElevatedButton.icon(
+                      onPressed: _mostrarAjuda,
+                      icon: const Icon(Icons.help_outline),
+                      label: const Text('Ajuda'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.grey[200],
+                        foregroundColor: Colors.black87,
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+                      ),
+                    ),
                     const SizedBox(height: 120),
                     const Text(
                       'Verificador de Nomes!',
@@ -173,7 +224,6 @@ if (!mounted) return;
                               hintText: 'Digite o nome',
                               border: OutlineInputBorder(borderRadius: BorderRadius.circular(30)),
                               contentPadding: const EdgeInsets.symmetric(horizontal: 20),
-                              
                             ),
                           ),
                         ),
@@ -184,43 +234,33 @@ if (!mounted) return;
                             backgroundColor: Colors.blue,
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
                           ),
-                          child: const Text(
-                            'Verificar',
-                            style: TextStyle(color: Colors.white),
-                          ),
+                          child: const Text('Verificar', style: TextStyle(color: Colors.white)),
                         ),
                       ],
                     ),
                   ],
                 ),
               ),
-
               const SizedBox(height: 32),
               const Divider(),
-
-              // Seção 2 - Histórico
               const SizedBox(height: 16),
               const Text('Histórico', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
               const SizedBox(height: 8),
               Row(
                 children: [
-                  Checkbox(
-                    value: true,
-                    onChanged: (bool? value) {},
-                  ),
+                  Checkbox(value: true, onChanged: (v) {}),
                   const Text('O marcado está disponível'),
                 ],
               ),
               const Row(
                 children: [
                   SizedBox(width: 12),
-                  Icon(Icons.star, size: 24, color: Colors.amber, ),
+                  Icon(Icons.star, size: 24, color: Colors.amber),
                   SizedBox(width: 13),
                   Text('Use a estrelinha para favoritar'),
                 ],
               ),
               const SizedBox(height: 16),
-
               Column(
                 children: _historico.map((nome) {
                   return NomeCard(
@@ -233,21 +273,13 @@ if (!mounted) return;
                   );
                 }).toList(),
               ),
-
               const SizedBox(height: 24),
-
               Center(
                 child: ElevatedButton.icon(
                   onPressed: _limparHistorico,
-                  icon: const Icon(
-                    Icons.cleaning_services,
-                    color: Colors.white,
-                  ),
-                  label: const Text(
-                    'Limpar Histórico',
-                    style: TextStyle(color: Colors.white),
-                  ),
-                  style: ElevatedButton.styleFrom(backgroundColor: const Color.fromARGB(255, 234, 109, 100)),
+                  icon: const Icon(Icons.cleaning_services, color: Colors.white),
+                  label: const Text('Limpar Histórico', style: TextStyle(color: Colors.white)),
+                  style: ElevatedButton.styleFrom(backgroundColor: Color.fromARGB(255, 234, 109, 100)),
                 ),
               ),
             ],

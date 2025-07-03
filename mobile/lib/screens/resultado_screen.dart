@@ -3,6 +3,8 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import 'package:diacritic/diacritic.dart';
+import 'package:mobile/inpi_script.dart';
+import 'package:mobile/widgets/aviso_inpi.dart';
 
 class ResultadoScreen extends StatefulWidget {
   final String nome;
@@ -52,36 +54,52 @@ class _ResultadoScreenState extends State<ResultadoScreen> {
     super.initState();
     _pageController = PageController(initialPage: 0);
 
-    _controllers = plataformas.map((plataforma) {
-      late final WebViewController controller;
+  _controllers = plataformas.map((plataforma) {
+    late final WebViewController controller;
+    controller = WebViewController()
+      ..setJavaScriptMode(JavaScriptMode.unrestricted)
+      ..enableZoom(true)
+      ..setBackgroundColor(Colors.transparent)
+      ..setNavigationDelegate(
+        NavigationDelegate(
+          onNavigationRequest: (request) {
+            final url = request.url;
+            if (url.startsWith('http') || url.startsWith('https')) {
+              return NavigationDecision.navigate;
+            } else {
+              debugPrint('❌ Esquema desconhecido bloqueado: $url');
+              return NavigationDecision.prevent;
+            }
+          },
+          onPageFinished: (url) {
+            if (plataforma == 'Maps' && !_plataformasCorrigidas.contains(plataforma)) {
+              _plataformasCorrigidas.add(plataforma);
+              Future.delayed(const Duration(seconds: 2), () {
+                debugPrint('🔄 Recarregando Maps para corrigir layout (1x apenas)...');
+                controller.reload();
+              });
+            }
 
-      controller = WebViewController()
-        ..setJavaScriptMode(JavaScriptMode.unrestricted)
-        ..setNavigationDelegate(
-          NavigationDelegate(
-            onNavigationRequest: (request) {
-              final url = request.url;
-              if (url.startsWith('http') || url.startsWith('https')) {
-                return NavigationDecision.navigate;
-              } else {
-                debugPrint('❌ Esquema desconhecido bloqueado: $url');
-                return NavigationDecision.prevent;
-              }
-            },
-            onPageFinished: (url) {
-              if (plataforma == 'Maps' && !_plataformasCorrigidas.contains(plataforma)) {
-                _plataformasCorrigidas.add(plataforma);
-                Future.delayed(const Duration(seconds: 2), () {
-                  debugPrint('🔄 Recarregando Maps para corrigir layout (1x apenas)...');
-                  controller.reload();
-                });
-              }
-            },
-          ),
-        )
-        ..loadRequest(Uri.parse(_gerarUrl(plataforma, widget.nome)));
+            if (plataforma == 'INPI') {
+              injetarScriptINPI(controller, widget.nome);
+            }
+          },
+        ),
+      )
+      ..loadRequest(Uri.parse(_gerarUrl(plataforma, widget.nome)));
 
-      return controller;
+    // ✅ Aqui está o canal JS com API moderna
+      controller.addJavaScriptChannel('NotificadorINPI',
+        onMessageReceived: (JavaScriptMessage message) {
+          if (message.message == 'pesquisa_enviada' || message.message == 'resultado_carregado') {
+            fecharAvisoINPI();
+          }
+        },
+      );
+
+
+
+    return controller;
     }).toList();
   }
 
@@ -99,12 +117,16 @@ class _ResultadoScreenState extends State<ResultadoScreen> {
   }
 
 
-  void _mudarPagina(int index) {
-    setState(() {
-      _paginaAtual = index;
-    });
-    _pageController.jumpToPage(index);
-  }
+void _mudarPagina(int index) {
+  setState(() {
+    _paginaAtual = index;
+  });
+  _pageController.jumpToPage(index);
+
+  // Só exibir aviso se estiver na aba do INPI
+  atualizarVisibilidadeAvisoINPI(plataformas[index] == 'INPI');
+}
+
 
   String _slugify(String str) {
     final semAcento = removeDiacritics(str.toLowerCase());
@@ -122,7 +144,7 @@ class _ResultadoScreenState extends State<ResultadoScreen> {
       case 'Domínio':
         return 'https://www.hostinger.com.br/domain-name-results?domain=$slug.com&from=domain-name-search';
       case 'Maps':
-        return 'https://www.google.com/maps/search/$encoded';
+        return 'https://www.google.com/maps/search/?api=1&query=$encoded&hl=pt-BR&gl=br';
       case 'Instagram':
         return 'https://www.instagram.com/$slug';
       case 'TikTok':
