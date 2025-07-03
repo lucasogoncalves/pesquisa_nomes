@@ -85,6 +85,20 @@ class _ResultadoScreenState extends State<ResultadoScreen> {
     }).toList();
   }
 
+  void reverificarAtual() {
+    final plataforma = plataformas[_paginaAtual];
+    final url = _gerarUrl(plataforma, widget.nome);
+    _controllers[_paginaAtual].loadRequest(Uri.parse(url));
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('🔄 Verificando novamente $plataforma...'),
+        duration: const Duration(seconds: 2),
+      ),
+    );
+  }
+
+
   void _mudarPagina(int index) {
     setState(() {
       _paginaAtual = index;
@@ -189,14 +203,20 @@ class _ResultadoScreenState extends State<ResultadoScreen> {
                       ),
                     ),
                   ),
-                  Checkbox(
+                 Checkbox(
                     value: widget.resultados[plataformas[_paginaAtual]] ?? false,
                     onChanged: (valor) {
                       setState(() {
                         widget.onResultadoChange(plataformas[_paginaAtual], valor ?? false);
                       });
                     },
+                    fillColor: WidgetStateProperty.resolveWith<Color>((Set<WidgetState> states) {
+                      if (states.contains(WidgetState.selected)) return Colors.blue;
+                      return Colors.white;
+                    }),
+
                   ),
+
                   IconButton(
                     tooltip: 'Recarregar aba',
                     icon: const Icon(Icons.refresh),

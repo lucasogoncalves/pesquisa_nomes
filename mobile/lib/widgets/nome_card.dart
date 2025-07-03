@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mobile/screens/resultado_screen.dart';
 
 class NomeCard extends StatelessWidget {
   final String nome;
@@ -27,9 +28,8 @@ class NomeCard extends StatelessWidget {
       'Instagram': 'assets/icons/Asset 5.png',
       'TikTok': 'assets/icons/Asset 4.png',
       'Facebook': 'assets/icons/Asset 3.png',
-      'YouTube': 'assets/icons/Asset 2.png', // Pode repetir por enquanto
+      'YouTube': 'assets/icons/Asset 2.png',
     };
-
 
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
@@ -56,15 +56,32 @@ class NomeCard extends StatelessWidget {
                 ),
               ),
               IconButton(
+                icon: const Icon(Icons.refresh),
+                tooltip: 'Reverificar nome',
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => ResultadoScreen(
+                        nome: nome,
+                        resultados: resultados,
+                        onResultadoChange: onResultadoChange,
+                      ),
+                    ),
+                  );
+                },
+              ),
+              IconButton(
                 icon: const Icon(Icons.close),
                 onPressed: onExcluir,
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 30),
           Wrap(
-            spacing: 12,
-            runSpacing: 8,
+            spacing: 2,
+            runSpacing: 2,
+            alignment: WrapAlignment.center,
             children: plataformaImagens.entries.map((entry) {
               final plataforma = entry.key;
               final icone = entry.value;
@@ -73,14 +90,23 @@ class NomeCard extends StatelessWidget {
               return Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Image.asset(icone, width: 24, height: 24),
+                  Image.asset(
+                    icone,
+                    width: 32,
+                    height: 32,
+                  ),
+                  const SizedBox(height: 6),
                   Checkbox(
                     value: selecionado,
-                    onChanged: (bool? novoValor) {
-                      if (novoValor != null) {
-                        onResultadoChange(plataforma, novoValor);
+                    onChanged: null,                  
+                    fillColor: WidgetStateProperty.resolveWith<Color>((states) {
+                      if (states.contains(WidgetState.selected)) {
+                        return Colors.blue;
                       }
-                    },
+                      return Colors.white;
+                    }),
+                    checkColor: Colors.black,
+                    side: const BorderSide(color: Colors.grey),
                   ),
                 ],
               );
