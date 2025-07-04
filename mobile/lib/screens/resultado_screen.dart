@@ -80,9 +80,11 @@ class _ResultadoScreenState extends State<ResultadoScreen> {
               });
             }
 
-            if (plataforma == 'INPI') {
+           if (plataforma == 'INPI') {
+              mostrarAvisoINPI(context, this);
               injetarScriptINPI(controller, widget.nome);
             }
+
           },
         ),
       )
@@ -122,6 +124,14 @@ void _mudarPagina(int index) {
     _paginaAtual = index;
   });
   _pageController.jumpToPage(index);
+
+   final plataforma = plataformas[index];
+
+  // ✅ Só mostra o aviso se for a aba do INPI
+  if (plataforma == 'INPI') {
+    print('🔔 mostrarAvisoINPI chamado no _mudarPagina');
+    mostrarAvisoINPI(context, this);
+  }
 
   // Só exibir aviso se estiver na aba do INPI
   atualizarVisibilidadeAvisoINPI(plataformas[index] == 'INPI');

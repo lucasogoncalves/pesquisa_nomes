@@ -6,13 +6,21 @@ bool _visivel = true;
 
 /// Mostra o aviso do INPI (com controle de visibilidade via `atualizarVisibilidadeAvisoINPI`)
 void mostrarAvisoINPI(BuildContext context, State state) {
-  if (_inpiOverlay != null) return;
-print('🔔 mostrarAvisoINPI chamado');
+  
+  final currentRoute = ModalRoute.of(context)?.settings.name;
+    if (currentRoute != null && !currentRoute.contains('Resultado')) {
+      debugPrint('⚠️ Ignorando mostrarAvisoINPI: rota atual é $currentRoute');
+      return;
+    }
 
+    if (_inpiOverlay != null || !_visivel) return;
 
-  _inpiOverlay = OverlayEntry(
-    builder: (_) => _AvisoINPIWidget(),
-  );
+    debugPrint('🔔 mostrarAvisoINPI chamado corretamente na ResultadoScreen');
+
+    _inpiOverlay = OverlayEntry(
+      builder: (_) => _AvisoINPIWidget(),
+    );
+    
   Overlay.of(context, rootOverlay: true).insert(_inpiOverlay!);
 
   Future.delayed(const Duration(seconds: 60), () {
