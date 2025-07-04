@@ -3,8 +3,9 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../widgets/nome_card.dart';
-import '../widgets/aviso_inpi.dart';
 import 'resultado_screen.dart';
+import 'package:mobile/widgets/help_dialog.dart';
+
 
 class NomeVerificado {
   final String nome;
@@ -54,9 +55,7 @@ void initState() {
   super.initState();
   _carregarHistorico();
 
-  WidgetsBinding.instance.addPostFrameCallback((_) {
-    mostrarAvisoINPI(context, this);
-  });
+  
 }
 
 
@@ -93,25 +92,28 @@ void initState() {
 
     await _salvarHistorico();
 
-    if (!mounted) return;
-    mostrarAvisoINPI(context, this);
 
-
+    
     Navigator.push(
+      // ignore: use_build_context_synchronously
       context,
       MaterialPageRoute(
         builder: (_) => ResultadoScreen(
           nome: novoNome.nome,
           resultados: novoNome.resultados,
           onResultadoChange: (plataforma, valor) async {
+            await _salvarHistorico();
+
+            if (!mounted) return;
+
             setState(() {
               novoNome.resultados[plataforma] = valor;
             });
-            await _salvarHistorico();
           },
         ),
       ),
     );
+
   }
 
   void _removerNome(NomeVerificado nome) async {
@@ -143,41 +145,6 @@ void initState() {
     await prefs.remove('historico');
   }
 
-  void _mostrarAjuda() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('ℹ️ Como usar o Verificador de Nomes'),
-        content: const SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('• Digite um nome no campo e clique em "Verificar".'),
-              SizedBox(height: 8),
-              Text('• O sistema irá checar se o nome está disponível em:'),
-              SizedBox(height: 4),
-              Text('  - INPI (registro de marca)\n  - Domínio .com\n  - Instagram\n  - TikTok\n  - Facebook\n  - YouTube\n  - Google Maps', style: TextStyle(fontSize: 13)),
-              SizedBox(height: 12),
-              Text('• Você pode marcar o checkbox caso o nome esteja disponível.'),
-              SizedBox(height: 8),
-              Text('• Favoritos são marcados com ⭐ e salvos no histórico.'),
-              SizedBox(height: 8),
-              Text('• Limpe o histórico ao final, se quiser.'),
-              SizedBox(height: 8),
-              Text('⚠️ Dica: o INPI pode demorar alguns segundos para responder.'),
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Fechar'),
-          ),
-        ],
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -191,17 +158,12 @@ void initState() {
                 child: Column(
                   children: [
                     const SizedBox(height: 40),
-                    ElevatedButton.icon(
-                      onPressed: _mostrarAjuda,
-                      icon: const Icon(Icons.help_outline),
-                      label: const Text('Ajuda'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.grey[200],
-                        foregroundColor: Colors.black87,
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+                      IconButton(
+                        icon: const Icon(Icons.help_outline),
+                        tooltip: 'Ajuda',
+                        onPressed: () => mostrarDialogAjuda(context),
                       ),
-                    ),
+
                     const SizedBox(height: 120),
                     const Text(
                       'Verificador de Nomes!',

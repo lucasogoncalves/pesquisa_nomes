@@ -1,7 +1,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <application
         android:usesCleartextTraffic="true"
-        android:label="mobile"
+        android:label="verificador de nomes"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity

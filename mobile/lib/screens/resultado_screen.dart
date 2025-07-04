@@ -22,7 +22,11 @@ class ResultadoScreen extends StatefulWidget {
   State<ResultadoScreen> createState() => _ResultadoScreenState();
 }
 
+
+
 class _ResultadoScreenState extends State<ResultadoScreen> {
+
+  
   final List<String> plataformas = [
     'INPI',
     'Domínio',
@@ -45,63 +49,66 @@ class _ResultadoScreenState extends State<ResultadoScreen> {
 
   late PageController _pageController;
   late List<WebViewController> _controllers;
-  final Set<String> _plataformasCorrigidas = {}; // ✅ novo controle por plataforma
-
+  final Set<String> _plataformasCorrigidas = {};
+  // ignore: prefer_final_fields
   int _paginaAtual = 0;
+
+  final GlobalKey<AvisoINPIState> _avisoKey = GlobalKey<AvisoINPIState>();
+
+
+ 
 
   @override
   void initState() {
     super.initState();
     _pageController = PageController(initialPage: 0);
 
-  _controllers = plataformas.map((plataforma) {
-    late final WebViewController controller;
-    controller = WebViewController()
-      ..setJavaScriptMode(JavaScriptMode.unrestricted)
-      ..enableZoom(true)
-      ..setBackgroundColor(Colors.transparent)
-      ..setNavigationDelegate(
-        NavigationDelegate(
-          onNavigationRequest: (request) {
-            final url = request.url;
-            if (url.startsWith('http') || url.startsWith('https')) {
-              return NavigationDecision.navigate;
-            } else {
-              debugPrint('❌ Esquema desconhecido bloqueado: $url');
-              return NavigationDecision.prevent;
+    _controllers = plataformas.map((plataforma) {
+      late final WebViewController controller;
+      controller = WebViewController()
+        ..setJavaScriptMode(JavaScriptMode.unrestricted)
+        ..enableZoom(true)
+        ..setBackgroundColor(Colors.transparent)
+        ..setNavigationDelegate(
+          NavigationDelegate(
+            onNavigationRequest: (request) {
+              final url = request.url;
+              if (url.startsWith('http') || url.startsWith('https')) {
+                return NavigationDecision.navigate;
+              } else {
+                debugPrint('❌ Esquema desconhecido bloqueado: $url');
+                return NavigationDecision.prevent;
+              }
+            },
+            onPageFinished: (url) {
+              if (plataforma == 'Maps' && !_plataformasCorrigidas.contains(plataforma)) {
+                _plataformasCorrigidas.add(plataforma);
+                Future.delayed(const Duration(seconds: 2), () {
+                  debugPrint('🔄 Recarregando Maps para corrigir layout (1x apenas)...');
+                  controller.reload();
+                });
+              }
+
+              if (plataforma == 'INPI') {
+                _avisoKey.currentState?.ativar();
+                injetarScriptINPI(controller, widget.nome);
+              }
+
+            },
+          ),
+        )
+        ..loadRequest(Uri.parse(_gerarUrl(plataforma, widget.nome)));
+
+        controller.addJavaScriptChannel('NotificadorINPI',
+          onMessageReceived: (JavaScriptMessage message) {
+            if (message.message == 'pesquisa_enviada' || message.message == 'resultado_carregado') {
+              _avisoKey.currentState?.resolver();
             }
           },
-          onPageFinished: (url) {
-            if (plataforma == 'Maps' && !_plataformasCorrigidas.contains(plataforma)) {
-              _plataformasCorrigidas.add(plataforma);
-              Future.delayed(const Duration(seconds: 2), () {
-                debugPrint('🔄 Recarregando Maps para corrigir layout (1x apenas)...');
-                controller.reload();
-              });
-            }
-
-           if (plataforma == 'INPI') {
-              mostrarAvisoINPI(context, this);
-              injetarScriptINPI(controller, widget.nome);
-            }
-
-          },
-        ),
-      )
-      ..loadRequest(Uri.parse(_gerarUrl(plataforma, widget.nome)));
-
-    // ✅ Aqui está o canal JS com API moderna
-      controller.addJavaScriptChannel('NotificadorINPI',
-        onMessageReceived: (JavaScriptMessage message) {
-          if (message.message == 'pesquisa_enviada' || message.message == 'resultado_carregado') {
-            fecharAvisoINPI();
-          }
-        },
-      );
+        );
 
 
-
-    return controller;
+      return controller;
     }).toList();
   }
 
@@ -118,25 +125,9 @@ class _ResultadoScreenState extends State<ResultadoScreen> {
     );
   }
 
-
-void _mudarPagina(int index) {
-  setState(() {
-    _paginaAtual = index;
-  });
-  _pageController.jumpToPage(index);
-
-   final plataforma = plataformas[index];
-
-  // ✅ Só mostra o aviso se for a aba do INPI
-  if (plataforma == 'INPI') {
-    print('🔔 mostrarAvisoINPI chamado no _mudarPagina');
-    mostrarAvisoINPI(context, this);
+  void _mudarPagina(int index) {
+    _pageController.jumpToPage(index);
   }
-
-  // Só exibir aviso se estiver na aba do INPI
-  atualizarVisibilidadeAvisoINPI(plataformas[index] == 'INPI');
-}
-
 
   String _slugify(String str) {
     final semAcento = removeDiacritics(str.toLowerCase());
@@ -175,7 +166,6 @@ void _mudarPagina(int index) {
       body: SafeArea(
         child: Column(
           children: [
-            // Topo com botão voltar e ícones
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 8.0),
               child: Row(
@@ -195,9 +185,8 @@ void _mudarPagina(int index) {
                             children: [
                               Image.asset(
                                 icones[plataforma]!,
-                                width: plataforma == 'Maps' ? 22 : 30, // Maps mais discreto
+                                width: plataforma == 'Maps' ? 22 : 30,
                               ),
-
                               if (_paginaAtual == index)
                                 Container(
                                   margin: const EdgeInsets.only(top: 4),
@@ -217,10 +206,7 @@ void _mudarPagina(int index) {
                 ],
               ),
             ),
-
             const SizedBox(height: 16),
-
-            // Cabeçalho com nome, checkbox e botão de recarregar
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16.0),
               child: Row(
@@ -235,20 +221,18 @@ void _mudarPagina(int index) {
                       ),
                     ),
                   ),
-                 Checkbox(
+                  Checkbox(
                     value: widget.resultados[plataformas[_paginaAtual]] ?? false,
                     onChanged: (valor) {
                       setState(() {
                         widget.onResultadoChange(plataformas[_paginaAtual], valor ?? false);
                       });
                     },
-                    fillColor: WidgetStateProperty.resolveWith<Color>((Set<WidgetState> states) {
+                    fillColor: WidgetStateProperty.resolveWith<Color>((states) {
                       if (states.contains(WidgetState.selected)) return Colors.blue;
                       return Colors.white;
                     }),
-
                   ),
-
                   IconButton(
                     tooltip: 'Recarregar aba',
                     icon: const Icon(Icons.refresh),
@@ -267,27 +251,33 @@ void _mudarPagina(int index) {
                 ],
               ),
             ),
-
             const SizedBox(height: 8),
-
-            // WebView por plataforma
             Expanded(
               child: PageView.builder(
                 controller: _pageController,
-                onPageChanged: _mudarPagina,
-                itemCount: plataformas.length,
-                itemBuilder: (_, index) {
-                  return Stack(
-                    children: [
-                      WebViewWidget(
-                        controller: _controllers[index],
-                        gestureRecognizers: {
-                          Factory(() => EagerGestureRecognizer()),
-                        },
-                      ),
-                    ],
-                  );
+                onPageChanged: (index) {
+                  setState(() {
+                    _paginaAtual = index;
+                  });
                 },
+
+                itemCount: plataformas.length,
+                  itemBuilder: (_, index) {
+                    final plataforma = plataformas[index];
+                    return Stack(
+                      children: [
+                        WebViewWidget(
+                          controller: _controllers[index],
+                          gestureRecognizers: {
+                            Factory(() => EagerGestureRecognizer()),
+                          },
+                        ),
+                        if (plataforma == 'INPI')
+                          AvisoINPI(key: _avisoKey),
+                      ],
+                    );
+                  }
+
               ),
             ),
           ],
