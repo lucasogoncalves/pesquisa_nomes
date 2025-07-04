@@ -24,7 +24,11 @@ class ResultadoScreen extends StatefulWidget {
 
 
 
+
+
 class _ResultadoScreenState extends State<ResultadoScreen> {
+
+  
 
   
   final List<String> plataformas = [
@@ -51,7 +55,14 @@ class _ResultadoScreenState extends State<ResultadoScreen> {
   late List<WebViewController> _controllers;
   final Set<String> _plataformasCorrigidas = {};
   // ignore: prefer_final_fields
+  final Set<String> _plataformasCorrigidas = {};
+  // ignore: prefer_final_fields
   int _paginaAtual = 0;
+
+  final GlobalKey<AvisoINPIState> _avisoKey = GlobalKey<AvisoINPIState>();
+
+
+ 
 
   final GlobalKey<AvisoINPIState> _avisoKey = GlobalKey<AvisoINPIState>();
 
@@ -88,12 +99,45 @@ class _ResultadoScreenState extends State<ResultadoScreen> {
                   controller.reload();
                 });
               }
+    _controllers = plataformas.map((plataforma) {
+      late final WebViewController controller;
+      controller = WebViewController()
+        ..setJavaScriptMode(JavaScriptMode.unrestricted)
+        ..enableZoom(true)
+        ..setBackgroundColor(Colors.transparent)
+        ..setNavigationDelegate(
+          NavigationDelegate(
+            onNavigationRequest: (request) {
+              final url = request.url;
+              if (url.startsWith('http') || url.startsWith('https')) {
+                return NavigationDecision.navigate;
+              } else {
+                debugPrint('❌ Esquema desconhecido bloqueado: $url');
+                return NavigationDecision.prevent;
+              }
+            },
+            onPageFinished: (url) {
+              if (plataforma == 'Maps' && !_plataformasCorrigidas.contains(plataforma)) {
+                _plataformasCorrigidas.add(plataforma);
+                Future.delayed(const Duration(seconds: 2), () {
+                  debugPrint('🔄 Recarregando Maps para corrigir layout (1x apenas)...');
+                  controller.reload();
+                });
+              }
 
               if (plataforma == 'INPI') {
                 _avisoKey.currentState?.ativar();
                 injetarScriptINPI(controller, widget.nome);
               }
+              if (plataforma == 'INPI') {
+                _avisoKey.currentState?.ativar();
+                injetarScriptINPI(controller, widget.nome);
+              }
 
+            },
+          ),
+        )
+        ..loadRequest(Uri.parse(_gerarUrl(plataforma, widget.nome)));
             },
           ),
         )
@@ -106,8 +150,16 @@ class _ResultadoScreenState extends State<ResultadoScreen> {
             }
           },
         );
+        controller.addJavaScriptChannel('NotificadorINPI',
+          onMessageReceived: (JavaScriptMessage message) {
+            if (message.message == 'pesquisa_enviada' || message.message == 'resultado_carregado') {
+              _avisoKey.currentState?.resolver();
+            }
+          },
+        );
 
 
+      return controller;
       return controller;
     }).toList();
   }
@@ -125,6 +177,9 @@ class _ResultadoScreenState extends State<ResultadoScreen> {
     );
   }
 
+  void _mudarPagina(int index) {
+    _pageController.jumpToPage(index);
+  }
   void _mudarPagina(int index) {
     _pageController.jumpToPage(index);
   }
@@ -186,6 +241,7 @@ class _ResultadoScreenState extends State<ResultadoScreen> {
                               Image.asset(
                                 icones[plataforma]!,
                                 width: plataforma == 'Maps' ? 22 : 30,
+                                width: plataforma == 'Maps' ? 22 : 30,
                               ),
                               if (_paginaAtual == index)
                                 Container(
@@ -222,12 +278,14 @@ class _ResultadoScreenState extends State<ResultadoScreen> {
                     ),
                   ),
                   Checkbox(
+                  Checkbox(
                     value: widget.resultados[plataformas[_paginaAtual]] ?? false,
                     onChanged: (valor) {
                       setState(() {
                         widget.onResultadoChange(plataformas[_paginaAtual], valor ?? false);
                       });
                     },
+                    fillColor: WidgetStateProperty.resolveWith<Color>((states) {
                     fillColor: WidgetStateProperty.resolveWith<Color>((states) {
                       if (states.contains(WidgetState.selected)) return Colors.blue;
                       return Colors.white;
@@ -262,6 +320,22 @@ class _ResultadoScreenState extends State<ResultadoScreen> {
                 },
 
                 itemCount: plataformas.length,
+                  itemBuilder: (_, index) {
+                    final plataforma = plataformas[index];
+                    return Stack(
+                      children: [
+                        WebViewWidget(
+                          controller: _controllers[index],
+                          gestureRecognizers: {
+                            Factory(() => EagerGestureRecognizer()),
+                          },
+                        ),
+                        if (plataforma == 'INPI')
+                          AvisoINPI(key: _avisoKey),
+                      ],
+                    );
+                  }
+
                   itemBuilder: (_, index) {
                     final plataforma = plataformas[index];
                     return Stack(
