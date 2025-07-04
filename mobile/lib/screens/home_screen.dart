@@ -3,7 +3,6 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../widgets/nome_card.dart';
-import '../widgets/aviso_inpi.dart';
 import 'resultado_screen.dart';
 
 class NomeVerificado {
@@ -54,9 +53,7 @@ void initState() {
   super.initState();
   _carregarHistorico();
 
-  WidgetsBinding.instance.addPostFrameCallback((_) {
-    mostrarAvisoINPI(context, this);
-  });
+  
 }
 
 
@@ -93,25 +90,28 @@ void initState() {
 
     await _salvarHistorico();
 
-    if (!mounted) return;
-    mostrarAvisoINPI(context, this);
 
-
+    
     Navigator.push(
+      // ignore: use_build_context_synchronously
       context,
       MaterialPageRoute(
         builder: (_) => ResultadoScreen(
           nome: novoNome.nome,
           resultados: novoNome.resultados,
           onResultadoChange: (plataforma, valor) async {
+            await _salvarHistorico();
+
+            if (!mounted) return;
+
             setState(() {
               novoNome.resultados[plataforma] = valor;
             });
-            await _salvarHistorico();
           },
         ),
       ),
     );
+
   }
 
   void _removerNome(NomeVerificado nome) async {

@@ -7,7 +7,7 @@ final script = '''
 
     const style = document.createElement('style');
     style.id = 'inpi-style';
-      style.innerHTML = \`
+      style.innerHTML = `
         html, body {
           margin: 0;
           padding: 0;
@@ -21,7 +21,7 @@ final script = '''
           margin-right: auto !important;
           max-width: 100%;
         }
-      \`;
+      `;
 
     document.head.appendChild(style);
 

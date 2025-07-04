@@ -1,74 +1,77 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 
-OverlayEntry? _inpiOverlay;
-bool _erroMostrado = false;
-bool _visivel = true;
+class AvisoINPI extends StatefulWidget {
+  const AvisoINPI({super.key});
 
-/// Mostra o aviso do INPI (com controle de visibilidade via `atualizarVisibilidadeAvisoINPI`)
-void mostrarAvisoINPI(BuildContext context, State state) {
-  
-  final currentRoute = ModalRoute.of(context)?.settings.name;
-    if (currentRoute != null && !currentRoute.contains('Resultado')) {
-      debugPrint('⚠️ Ignorando mostrarAvisoINPI: rota atual é $currentRoute');
-      return;
-    }
+  @override
+  State<AvisoINPI> createState() => AvisoINPIState();
+}
 
-    if (_inpiOverlay != null || !_visivel) return;
+class AvisoINPIState extends State<AvisoINPI> {
+  bool _ativo = false;
+  bool _erroMostrado = false;
+  Timer? _timeout;
 
-    debugPrint('🔔 mostrarAvisoINPI chamado corretamente na ResultadoScreen');
+  /// Chame isso quando a aba INPI for ativada
+  void ativar() {
+    if (_ativo) return;
 
-    _inpiOverlay = OverlayEntry(
-      builder: (_) => _AvisoINPIWidget(),
-    );
-    
-  Overlay.of(context, rootOverlay: true).insert(_inpiOverlay!);
+    setState(() {
+      _ativo = true;
+      _erroMostrado = false;
+    });
 
-  Future.delayed(const Duration(seconds: 60), () {
-    if (_inpiOverlay != null && !_erroMostrado && state.mounted) {
-      _erroMostrado = true;
-      fecharAvisoINPI();
+    _timeout?.cancel();
+    _timeout = Timer(const Duration(seconds: 60), () {
+      if (mounted && _ativo && !_erroMostrado) {
+        _erroMostrado = true;
+        _ativo = false;
 
-      showDialog(
-        context: state.context,
-        builder: (_) => AlertDialog(
-          title: const Text('❌ INPI indisponível'),
-          content: const Text(
-            'O site do INPI pode estar fora do ar.\n\nEnquanto isso, veja as outras plataformas e tente novamente mais tarde.',
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(state.context).pop(),
-              child: const Text('OK'),
+        showDialog(
+          context: context,
+          builder: (_) => AlertDialog(
+            title: const Text('❌ INPI indisponível'),
+            content: const Text(
+              'O site do INPI pode estar fora do ar.\n\nEnquanto isso, veja as outras plataformas e tente novamente mais tarde.',
             ),
-          ],
-        ),
-      );
-    }
-  });
-}
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text('OK'),
+              ),
+            ],
+          ),
+        );
 
-/// Fecha o aviso de carregamento do INPI
-void fecharAvisoINPI() {
-  _inpiOverlay?.remove();
-  _inpiOverlay = null;
-  _erroMostrado = false;
-}
+        setState(() {}); // força o sumiço do aviso
+      }
+    });
+  }
 
-/// Atualiza se o aviso do INPI deve ser visível/interagível
-void atualizarVisibilidadeAvisoINPI(bool ativo) {
-  _visivel = ativo;
-  _inpiOverlay?.markNeedsBuild();
-}
+  /// Chame isso quando o script responder (pesquisa enviada ou resultado carregado)
+  void resolver() {
+    if (!_ativo) return;
 
-/// Widget do aviso em overlay com visibilidade condicional
-class _AvisoINPIWidget extends StatelessWidget {
+    _timeout?.cancel();
+    setState(() => _ativo = false);
+  }
+
+  @override
+  void dispose() {
+    _timeout?.cancel();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
+    if (!_ativo) return const SizedBox.shrink();
+
     return Positioned.fill(
       child: IgnorePointer(
-        ignoring: !_visivel,
+        ignoring: false,
         child: AnimatedOpacity(
-          opacity: _visivel ? 1 : 0,
+          opacity: 1,
           duration: const Duration(milliseconds: 300),
           child: Center(
             child: Material(
