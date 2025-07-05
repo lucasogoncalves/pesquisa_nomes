@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../widgets/nome_card.dart';
 import '../screens/resultado_screen.dart';
-import '../widgets/help_dialog.dart';
+import 'package:verificadordenomes/widgets/help_dialog.dart';
 
 class NomeVerificado {
   final String nome;

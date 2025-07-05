@@ -4,8 +4,8 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import 'package:diacritic/diacritic.dart';
-import 'package:mobile/inpi_script.dart';
-import 'package:mobile/widgets/aviso_inpi.dart';
+import 'package:verificadordenomes/inpi_script.dart';
+import 'package:verificadordenomes/widgets/aviso_inpi.dart';
 
 
 class ResultadoScreen extends StatefulWidget {
@@ -35,6 +35,7 @@ class _ResultadoScreenState extends State<ResultadoScreen> {
     'YouTube',
   ];
 
+
   final Map<String, String> icones = {
     'INPI': 'assets/icons/Asset 7.png',
     'Domínio': 'assets/icons/Asset 6.png',
@@ -45,6 +46,7 @@ class _ResultadoScreenState extends State<ResultadoScreen> {
     'YouTube': 'assets/icons/Asset 2.png',
   };
 
+  late Map<String, bool> _estadoLocal;
   late PageController _pageController;
   late List<WebViewController> _controllers;
   final Set<String> _plataformasCorrigidas = {};
@@ -55,7 +57,7 @@ class _ResultadoScreenState extends State<ResultadoScreen> {
   void initState() {
     super.initState();
     _pageController = PageController(initialPage: 0);
-
+    _estadoLocal = Map.from(widget.resultados);
     _controllers = plataformas.map((plataforma) {
       late final WebViewController controller;
 
@@ -207,9 +209,13 @@ class _ResultadoScreenState extends State<ResultadoScreen> {
                     ),
                   ),
                   Checkbox(
-                    value: widget.resultados[widget.nome] ?? false,
+                    value: _estadoLocal[plataformas[_paginaAtual]] ?? false,
                     onChanged: (value) {
-                      widget.onResultadoChange(widget.nome, value ?? false);
+                      final plataformaAtual = plataformas[_paginaAtual];
+                      setState(() {
+                        _estadoLocal[plataformaAtual] = value ?? false;
+                      });
+                      widget.onResultadoChange(plataformaAtual, value ?? false);
                     },
                     fillColor: WidgetStateProperty.resolveWith<Color>((states) {
                       if (states.contains(WidgetState.selected)) return Colors.blue;

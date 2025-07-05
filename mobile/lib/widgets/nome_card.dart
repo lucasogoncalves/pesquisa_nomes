@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:mobile/screens/resultado_screen.dart';
+import 'package:verificadordenomes/screens/resultado_screen.dart';
 
 class NomeCard extends StatelessWidget {
   final String nome;
@@ -98,7 +98,7 @@ class NomeCard extends StatelessWidget {
                   const SizedBox(height: 6),
                   Checkbox(
                     value: selecionado,
-                    onChanged: null,                  
+                    onChanged: null,
                     fillColor: WidgetStateProperty.resolveWith<Color>((states) {
                       if (states.contains(WidgetState.selected)) {
                         return Colors.blue;
