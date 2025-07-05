@@ -13,7 +13,6 @@ class AvisoINPIState extends State<AvisoINPI> {
   bool _erroMostrado = false;
   Timer? _timeout;
 
-  /// Chame isso quando a aba INPI for ativada
   void ativar() {
     if (_ativo) return;
 
@@ -33,28 +32,28 @@ class AvisoINPIState extends State<AvisoINPI> {
           builder: (_) => AlertDialog(
             title: const Text('❌ INPI indisponível'),
             content: const Text(
-              'O site do INPI pode estar fora do ar.\n\nEnquanto isso, veja as outras plataformas e tente novamente mais tarde.',
+              'O site do INPI pode estar lento ou fora do ar.\n'
+              'Tente novamente mais tarde ou recarregue a aba.',
             ),
             actions: [
               TextButton(
                 onPressed: () => Navigator.of(context).pop(),
-                child: const Text('OK'),
+                child: const Text('Fechar'),
               ),
             ],
           ),
         );
-
-        setState(() {}); // força o sumiço do aviso
       }
     });
   }
 
-  /// Chame isso quando o script responder (pesquisa enviada ou resultado carregado)
   void resolver() {
-    if (!_ativo) return;
-
     _timeout?.cancel();
-    setState(() => _ativo = false);
+    if (_ativo) {
+      setState(() {
+        _ativo = false;
+      });
+    }
   }
 
   @override
@@ -67,51 +66,27 @@ class AvisoINPIState extends State<AvisoINPI> {
   Widget build(BuildContext context) {
     if (!_ativo) return const SizedBox.shrink();
 
-    return Positioned.fill(
-      child: IgnorePointer(
-        ignoring: false,
-        child: AnimatedOpacity(
-          opacity: 1,
-          duration: const Duration(milliseconds: 300),
-          child: Center(
-            child: Material(
-              color: Colors.transparent,
-              child: Container(
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black26,
-                      blurRadius: 10,
-                      offset: Offset(0, 4),
-                    ),
-                  ],
-                ),
-                child: const Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    CircularProgressIndicator(),
-                    SizedBox(height: 12),
-                    Text(
-                      'Buscando no INPI...',
-                      style: TextStyle(fontSize: 16),
-                      textAlign: TextAlign.center,
-                    ),
-                    SizedBox(height: 6),
-                    Text(
-                      'Isso pode levar alguns segundos.',
-                      style: TextStyle(fontSize: 13, color: Colors.black54),
-                      textAlign: TextAlign.center,
-                    ),
-                  ],
-                ),
-              ),
-            ),
+    return Card(
+  margin: const EdgeInsets.all(16),
+  color: Colors.white,
+  elevation: 4,
+  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+  child: Padding(
+    padding: const EdgeInsets.all(16),
+    child: Row(
+      children: const [
+        CircularProgressIndicator(),
+        SizedBox(width: 12),
+        Expanded(
+          child: Text(
+            'Aguarde alguns segundos... o INPI está carregando.',
+            style: TextStyle(fontSize: 16),
           ),
         ),
-      ),
-    );
+      ],
+    ),
+  ),
+);
+
   }
 }

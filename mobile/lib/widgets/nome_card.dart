@@ -105,7 +105,7 @@ class NomeCard extends StatelessWidget {
                       }
                       return Colors.white;
                     }),
-                    checkColor: Colors.black,
+                    checkColor: const Color.fromARGB(255, 255, 255, 255),
                     side: const BorderSide(color: Colors.grey),
                   ),
                 ],

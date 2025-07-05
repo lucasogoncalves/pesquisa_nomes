@@ -1,3 +1,4 @@
+// lib/screens/resultado_screen.dart
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
@@ -5,6 +6,7 @@ import 'package:webview_flutter/webview_flutter.dart';
 import 'package:diacritic/diacritic.dart';
 import 'package:mobile/inpi_script.dart';
 import 'package:mobile/widgets/aviso_inpi.dart';
+
 
 class ResultadoScreen extends StatefulWidget {
   final String nome;
@@ -22,15 +24,7 @@ class ResultadoScreen extends StatefulWidget {
   State<ResultadoScreen> createState() => _ResultadoScreenState();
 }
 
-
-
-
-
 class _ResultadoScreenState extends State<ResultadoScreen> {
-
-  
-
-  
   final List<String> plataformas = [
     'INPI',
     'Domínio',
@@ -54,20 +48,8 @@ class _ResultadoScreenState extends State<ResultadoScreen> {
   late PageController _pageController;
   late List<WebViewController> _controllers;
   final Set<String> _plataformasCorrigidas = {};
-  // ignore: prefer_final_fields
-  final Set<String> _plataformasCorrigidas = {};
-  // ignore: prefer_final_fields
   int _paginaAtual = 0;
-
   final GlobalKey<AvisoINPIState> _avisoKey = GlobalKey<AvisoINPIState>();
-
-
- 
-
-  final GlobalKey<AvisoINPIState> _avisoKey = GlobalKey<AvisoINPIState>();
-
-
- 
 
   @override
   void initState() {
@@ -76,32 +58,9 @@ class _ResultadoScreenState extends State<ResultadoScreen> {
 
     _controllers = plataformas.map((plataforma) {
       late final WebViewController controller;
-      controller = WebViewController()
-        ..setJavaScriptMode(JavaScriptMode.unrestricted)
-        ..enableZoom(true)
-        ..setBackgroundColor(Colors.transparent)
-        ..setNavigationDelegate(
-          NavigationDelegate(
-            onNavigationRequest: (request) {
-              final url = request.url;
-              if (url.startsWith('http') || url.startsWith('https')) {
-                return NavigationDecision.navigate;
-              } else {
-                debugPrint('❌ Esquema desconhecido bloqueado: $url');
-                return NavigationDecision.prevent;
-              }
-            },
-            onPageFinished: (url) {
-              if (plataforma == 'Maps' && !_plataformasCorrigidas.contains(plataforma)) {
-                _plataformasCorrigidas.add(plataforma);
-                Future.delayed(const Duration(seconds: 2), () {
-                  debugPrint('🔄 Recarregando Maps para corrigir layout (1x apenas)...');
-                  controller.reload();
-                });
-              }
-    _controllers = plataformas.map((plataforma) {
-      late final WebViewController controller;
-      controller = WebViewController()
+
+      controller = WebViewController();
+      controller
         ..setJavaScriptMode(JavaScriptMode.unrestricted)
         ..enableZoom(true)
         ..setBackgroundColor(Colors.transparent)
@@ -129,59 +88,27 @@ class _ResultadoScreenState extends State<ResultadoScreen> {
                 _avisoKey.currentState?.ativar();
                 injetarScriptINPI(controller, widget.nome);
               }
-              if (plataforma == 'INPI') {
-                _avisoKey.currentState?.ativar();
-                injetarScriptINPI(controller, widget.nome);
-              }
-
             },
           ),
         )
-        ..loadRequest(Uri.parse(_gerarUrl(plataforma, widget.nome)));
-            },
-          ),
-        )
-        ..loadRequest(Uri.parse(_gerarUrl(plataforma, widget.nome)));
-
-        controller.addJavaScriptChannel('NotificadorINPI',
+        ..addJavaScriptChannel('NotificadorINPI',
           onMessageReceived: (JavaScriptMessage message) {
             if (message.message == 'pesquisa_enviada' || message.message == 'resultado_carregado') {
               _avisoKey.currentState?.resolver();
             }
           },
-        );
-        controller.addJavaScriptChannel('NotificadorINPI',
-          onMessageReceived: (JavaScriptMessage message) {
-            if (message.message == 'pesquisa_enviada' || message.message == 'resultado_carregado') {
-              _avisoKey.currentState?.resolver();
-            }
-          },
-        );
+        )
+        ..loadRequest(Uri.parse(_gerarUrl(plataforma, widget.nome)));
 
-
-      return controller;
       return controller;
     }).toList();
   }
 
-  void reverificarAtual() {
-    final plataforma = plataformas[_paginaAtual];
-    final url = _gerarUrl(plataforma, widget.nome);
-    _controllers[_paginaAtual].loadRequest(Uri.parse(url));
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('🔄 Verificando novamente $plataforma...'),
-        duration: const Duration(seconds: 2),
-      ),
-    );
-  }
-
   void _mudarPagina(int index) {
-    _pageController.jumpToPage(index);
-  }
-  void _mudarPagina(int index) {
-    _pageController.jumpToPage(index);
+    setState(() {
+      _paginaAtual = index;
+      _pageController.jumpToPage(index);
+    });
   }
 
   String _slugify(String str) {
@@ -241,10 +168,11 @@ class _ResultadoScreenState extends State<ResultadoScreen> {
                               Image.asset(
                                 icones[plataforma]!,
                                 width: plataforma == 'Maps' ? 22 : 30,
-                                width: plataforma == 'Maps' ? 22 : 30,
                               ),
-                              if (_paginaAtual == index)
-                                Container(
+                              AnimatedOpacity(
+                                opacity: _paginaAtual == index ? 1.0 : 0.0,
+                                duration: const Duration(milliseconds: 300),
+                                child: Container(
                                   margin: const EdgeInsets.only(top: 4),
                                   width: 6,
                                   height: 6,
@@ -253,6 +181,7 @@ class _ResultadoScreenState extends State<ResultadoScreen> {
                                     color: Colors.blue,
                                   ),
                                 ),
+                              ),
                             ],
                           ),
                         );
@@ -278,14 +207,10 @@ class _ResultadoScreenState extends State<ResultadoScreen> {
                     ),
                   ),
                   Checkbox(
-                  Checkbox(
-                    value: widget.resultados[plataformas[_paginaAtual]] ?? false,
-                    onChanged: (valor) {
-                      setState(() {
-                        widget.onResultadoChange(plataformas[_paginaAtual], valor ?? false);
-                      });
+                    value: widget.resultados[widget.nome] ?? false,
+                    onChanged: (value) {
+                      widget.onResultadoChange(widget.nome, value ?? false);
                     },
-                    fillColor: WidgetStateProperty.resolveWith<Color>((states) {
                     fillColor: WidgetStateProperty.resolveWith<Color>((states) {
                       if (states.contains(WidgetState.selected)) return Colors.blue;
                       return Colors.white;
@@ -313,45 +238,22 @@ class _ResultadoScreenState extends State<ResultadoScreen> {
             Expanded(
               child: PageView.builder(
                 controller: _pageController,
-                onPageChanged: (index) {
-                  setState(() {
-                    _paginaAtual = index;
-                  });
-                },
-
+                onPageChanged: _mudarPagina,
                 itemCount: plataformas.length,
-                  itemBuilder: (_, index) {
-                    final plataforma = plataformas[index];
-                    return Stack(
-                      children: [
-                        WebViewWidget(
-                          controller: _controllers[index],
-                          gestureRecognizers: {
-                            Factory(() => EagerGestureRecognizer()),
-                          },
-                        ),
-                        if (plataforma == 'INPI')
-                          AvisoINPI(key: _avisoKey),
-                      ],
-                    );
-                  }
-
-                  itemBuilder: (_, index) {
-                    final plataforma = plataformas[index];
-                    return Stack(
-                      children: [
-                        WebViewWidget(
-                          controller: _controllers[index],
-                          gestureRecognizers: {
-                            Factory(() => EagerGestureRecognizer()),
-                          },
-                        ),
-                        if (plataforma == 'INPI')
-                          AvisoINPI(key: _avisoKey),
-                      ],
-                    );
-                  }
-
+                itemBuilder: (_, index) {
+                  final plataforma = plataformas[index];
+                  return Stack(
+                    children: [
+                      WebViewWidget(
+                        controller: _controllers[index],
+                        gestureRecognizers: {
+                          Factory(() => EagerGestureRecognizer()),
+                        },
+                      ),
+                      if (plataforma == 'INPI') AvisoINPI(key: _avisoKey),
+                    ],
+                  );
+                },
               ),
             ),
           ],

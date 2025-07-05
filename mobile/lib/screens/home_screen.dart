@@ -3,9 +3,8 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../widgets/nome_card.dart';
-import 'resultado_screen.dart';
-import 'package:mobile/widgets/help_dialog.dart';
-
+import '../screens/resultado_screen.dart';
+import '../widgets/help_dialog.dart';
 
 class NomeVerificado {
   final String nome;
@@ -50,15 +49,11 @@ class _HomeScreenState extends State<HomeScreen> {
   final TextEditingController _controller = TextEditingController();
   final List<NomeVerificado> _historico = [];
 
-@override
-void initState() {
-  super.initState();
-  _carregarHistorico();
-
-  
-}
-
-
+  @override
+  void initState() {
+    super.initState();
+    _carregarHistorico();
+  }
 
   Future<void> _salvarHistorico() async {
     final prefs = await SharedPreferences.getInstance();
@@ -92,7 +87,6 @@ void initState() {
 
     await _salvarHistorico();
 
-
     
     Navigator.push(
       // ignore: use_build_context_synchronously
@@ -103,9 +97,7 @@ void initState() {
           resultados: novoNome.resultados,
           onResultadoChange: (plataforma, valor) async {
             await _salvarHistorico();
-
             if (!mounted) return;
-
             setState(() {
               novoNome.resultados[plataforma] = valor;
             });
@@ -113,7 +105,6 @@ void initState() {
         ),
       ),
     );
-
   }
 
   void _removerNome(NomeVerificado nome) async {
@@ -158,12 +149,11 @@ void initState() {
                 child: Column(
                   children: [
                     const SizedBox(height: 40),
-                      IconButton(
-                        icon: const Icon(Icons.help_outline),
-                        tooltip: 'Ajuda',
-                        onPressed: () => mostrarDialogAjuda(context),
-                      ),
-
+                    IconButton(
+                      icon: const Icon(Icons.help_outline),
+                      tooltip: 'Ajuda',
+                      onPressed: () => mostrarDialogAjuda(context),
+                    ),
                     const SizedBox(height: 120),
                     const Text(
                       'Verificador de Nomes!',
@@ -184,7 +174,9 @@ void initState() {
                             controller: _controller,
                             decoration: InputDecoration(
                               hintText: 'Digite o nome',
-                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(30)),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(30),
+                              ),
                               contentPadding: const EdgeInsets.symmetric(horizontal: 20),
                             ),
                           ),
@@ -194,9 +186,14 @@ void initState() {
                           onPressed: _adicionarNome,
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.blue,
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(30),
+                            ),
                           ),
-                          child: const Text('Verificar', style: TextStyle(color: Colors.white)),
+                          child: const Text(
+                            'Verificar',
+                            style: TextStyle(color: Colors.white),
+                          ),
                         ),
                       ],
                     ),
@@ -206,7 +203,10 @@ void initState() {
               const SizedBox(height: 32),
               const Divider(),
               const SizedBox(height: 16),
-              const Text('Histórico', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+              const Text(
+                'Histórico',
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              ),
               const SizedBox(height: 8),
               Row(
                 children: [
@@ -231,7 +231,8 @@ void initState() {
                     resultados: nome.resultados,
                     onExcluir: () => _removerNome(nome),
                     onFavoritoToggle: () => _alternarFavorito(nome),
-                    onResultadoChange: (plataforma, valor) => _atualizarResultado(nome, plataforma, valor),
+                    onResultadoChange: (plataforma, valor) =>
+                        _atualizarResultado(nome, plataforma, valor),
                   );
                 }).toList(),
               ),
@@ -240,8 +241,13 @@ void initState() {
                 child: ElevatedButton.icon(
                   onPressed: _limparHistorico,
                   icon: const Icon(Icons.cleaning_services, color: Colors.white),
-                  label: const Text('Limpar Histórico', style: TextStyle(color: Colors.white)),
-                  style: ElevatedButton.styleFrom(backgroundColor: Color.fromARGB(255, 234, 109, 100)),
+                  label: const Text(
+                    'Limpar Histórico',
+                    style: TextStyle(color: Colors.white),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Color.fromARGB(255, 234, 109, 100),
+                  ),
                 ),
               ),
             ],
